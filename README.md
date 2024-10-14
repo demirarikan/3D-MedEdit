@@ -77,7 +77,7 @@ cd mededit
 #### 3). Install requirements
 *Optional* create virtual env:
 ```bash
-conda create --name mededit python=3.8.0
+conda create --name mededit python=3.9.19
 conda activate mededit
 ```
 
