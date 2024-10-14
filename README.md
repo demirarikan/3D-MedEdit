@@ -16,7 +16,7 @@ MedEdit: Counterfactual Diffusion-based Image Editing on Brain MRI
 <h4 align="center"><a href="https://link.springer.com/chapter/10.1007/978-3-031-73281-2_16">Proceedings</a>  • <a href="https://arxiv.org/pdf/2407.15270">Preprint</a> </h4>
 
 <p align="center">
-<img src="https://github.com/Malekba98/autoDDPM/blob/Mededit/assets/method_animation.gif">
+<img src="https://github.com/Malekba98/MedEdit/blob/main/assets/method_animation.gif">
 </p>
 
 ## Citation
