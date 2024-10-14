@@ -39,19 +39,13 @@ class DDPM(nn.Module):
         attention_levels=(False, True, True),
         num_res_blocks=1,
         num_head_channels=256,
-        method="autoDDPM",
         train_scheduler="ddpm",
         inference_scheduler="ddpm",
         inference_steps=1000,
         noise_level_recon=300,
-        noise_level_inpaint=50,
         noise_type="gaussian",
         prediction_type="epsilon",
         resample_steps=4,
-        masking_threshold=-1,
-        threshold_low=1,
-        threshold_high=10000,
-        binarization_threshold=0.5,
         encoding_ratio=0.5,
         image_path="",
     ):
@@ -65,17 +59,11 @@ class DDPM(nn.Module):
             num_res_blocks=num_res_blocks,
             num_head_channels=num_head_channels,
         )
-        self.method = method
         self.noise_level_recon = noise_level_recon
-        self.noise_level_inpaint = noise_level_inpaint
         self.prediction_type = prediction_type
         self.resample_steps = resample_steps
-        self.masking_threshold = masking_threshold
-        self.threshold_low = threshold_low
-        self.threshold_high = threshold_high
         self.image_path = image_path
 
-        self.binarization_threshold = binarization_threshold
         self.encoding_ratio = encoding_ratio
 
         # set up scheduler and timesteps
