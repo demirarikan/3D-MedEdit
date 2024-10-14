@@ -108,14 +108,18 @@ python core/Main.py --config_path ./projects/mededit/configs/mededit.yaml
 > *Make sure to move the model generated during training to the specified directory in the configuration file mededit.yaml. Alternatively, you can store the pre-trained model from <a href="https://www.dropbox.com/scl/fi/6m0zic01q53riu1ydyny8/model_pretraining_1500.pt?rlkey=ct6wdhuffollokrd5gigb1qsb&e=1&st=q3p9l105&dl=0"> HERE</a> into the specified directory to skip the pre-training part.*
 
 
-
-Run the scripts with the corresponding config like this:
+To run the baselines, first train palette through:
+```bash
+python core/Main.py --config_path .projects/baselines/configs/palette_training.yaml
+```
+then run the scripts with the corresponding configs like this:
 
 ```bash
+python core/Main.py --config_path ./projects/baselines/configs/palette.yaml
 python core/Main.py --config_path ./projects/baselines/configs/sdedit.yaml
 python core/Main.py --config_path ./projects/baselines/configs/naive_repaint.yaml
-python core/Main.py --config_path ./projects/baselines/configs/palette.yaml
 ```
+> *SDEdit and Naive RePaint use the same pre-trained diffusion model used in MedEdit. Make sure to move the model generated during the training of palette to the specified directory in the configuration file palette.yaml. Alternatively, you can store the trained model from <a href="https://www.dropbox.com/scl/fi/z9ly5pvt02zex3xshpm65/model_palette_1500.pt?rlkey=ny2wittitxt9sp7zjvg84v39y&st=fzyiqs0l&dl=0"> HERE</a> into the specified directory to skip the training part.*
 
 
 
