@@ -95,7 +95,7 @@ pip install -r pip_requirements.txt
 
 #### 5). Run the pipeline
 
-First, store the model weights of each fold of the trained nnUNet from <a href="https://www.dropbox.com/scl/fo/i8vqlr2a3emb4g86g0dim/AGDxd5tFeKH_FRnBdu7XkWw?rlkey=qw1dr5h1oecc8v3hpiq79xe46&st=fwtak2gl&dl=0"> HERE</a> into the corresponding nnunet_model/folds/$FOLD_X folder. Then rename each file to checkpoint_final.pth.
+First, store the model weights of each fold of the trained nnUNet from <a href="https://www.dropbox.com/scl/fo/i8vqlr2a3emb4g86g0dim/AGDxd5tFeKH_FRnBdu7XkWw?rlkey=qw1dr5h1oecc8v3hpiq79xe46&st=fwtak2gl&dl=0"> HERE</a> into the corresponding `nnunet_model/folds/$FOLD` folder. Then rename each stored file to `checkpoint_final.pth`.
 
 To run MedEdit, first pre-train its diffusion model through:
 ```bash
