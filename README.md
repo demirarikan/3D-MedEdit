@@ -70,7 +70,7 @@ Paste the API key from https://wandb.ai/authorize when prompted.
 #### 2). Clone repository
 
 ```bash
-git clone https://github.com/ci-ber/autoDDPM.git
+git clone https://github.com/Malekba98/MedEdit.git
 cd mededit
 ```
 
