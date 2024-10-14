@@ -85,26 +85,15 @@ conda activate mededit
 pip install -r pip_requirements.txt
 ```
 
-#### 4). Install PyTorch 
 
-> Example installation: 
-* *with cuda*: 
-```
-pip3 install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-```
-* *w/o cuda*:
-```
-pip3 install torch==1.9.1 torchvision==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
-```
-
-#### 5). Download datasets 
+#### 4). Download datasets 
 
 <h4 align="center"><a href="https://fcon_1000.projects.nitrc.org/indi/retro/atlas.html">Atlas (Stroke) </a> </h4>
 
 > Move the datasets to the target locations. You can find detailed information about the expected files and locations in the corresponding *.csv files under data/$DATASET/splits.
 
 
-#### 6). Run the pipeline
+#### 5). Run the pipeline
 
 To run MedEdit, first pre-train its diffusion model through:
 ```bash
@@ -116,7 +105,7 @@ then run:
 python core/Main.py --config_path ./projects/mededit/configs/mededit.yaml
 
 ```
-> *Alternatively, you can store the pre-trained model from <a href="https://www.dropbox.com/scl/fi/6m0zic01q53riu1ydyny8/model_pretraining_1500.pt?rlkey=ct6wdhuffollokrd5gigb1qsb&e=1&st=q3p9l105&dl=0"> HERE</a> into the specified directory to skip the training part.*
+> *Make sure to move the model generated during training to the specified directory in the configuration file mededit.yaml. Alternatively, you can store the pre-trained model from <a href="https://www.dropbox.com/scl/fi/6m0zic01q53riu1ydyny8/model_pretraining_1500.pt?rlkey=ct6wdhuffollokrd5gigb1qsb&e=1&st=q3p9l105&dl=0"> HERE</a> into the specified directory to skip the pre-training part.*
 
 
 
