@@ -103,20 +103,31 @@ pip3 install torch==1.9.1 torchvision==0.10.1 -f https://download.pytorch.org/wh
 
 > Move the datasets to the target locations. You can find detailed information about the expected files and locations in the corresponding *.csv files under data/$DATASET/splits.
 
-> *Alternatively you can use your own mid-axial slices of T1w brain scans with our <a href="https://www.dropbox.com/scl/fi/6m0zic01q53riu1ydyny8/model_pretraining_1500.pt?rlkey=ct6wdhuffollokrd5gigb1qsb&e=1&st=q3p9l105&dl=0"> pre-trained weights</a> or train from scratch on other anatomies and modalities.*
 
 #### 6). Run the pipeline
+
+To run MedEdit, first pre-train its diffusion model through:
+```bash
+python core/Main.py --config_path .projects/mededit/configs/diffusion_pretraining.yaml
+```
+then run:
+
+```bash
+python core/Main.py --config_path ./projects/mededit/configs/mededit.yaml
+
+```
+> *Alternatively, you can store the pre-trained model from <a href="https://www.dropbox.com/scl/fi/6m0zic01q53riu1ydyny8/model_pretraining_1500.pt?rlkey=ct6wdhuffollokrd5gigb1qsb&e=1&st=q3p9l105&dl=0"> HERE</a> into the specified directory to skip the training part.*
+
+
 
 Run the scripts with the corresponding config like this:
 
 ```bash
-python core/Main.py --config_path ./projects/mededit/configs/mededit.yaml
 python core/Main.py --config_path ./projects/baselines/configs/sdedit.yaml
 python core/Main.py --config_path ./projects/baselines/configs/naive_repaint.yaml
 python core/Main.py --config_path ./projects/baselines/configs/palette.yaml
 ```
 
-Refer to the mededit.yaml for the default configuration. Store the pre-trained model from <a href="https://www.dropbox.com/scl/fi/6m0zic01q53riu1ydyny8/model_pretraining_1500.pt?rlkey=ct6wdhuffollokrd5gigb1qsb&e=1&st=q3p9l105&dl=0"> HERE</a> into the specified directory to skip the training part.
 
 
 # That's it, enjoy! :rocket:
