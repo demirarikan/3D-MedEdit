@@ -1,0 +1,98 @@
+name: palette
+target_size: &target_size !!python/tuple [128, 128]
+downstream_batch_size: &dbatch_size 32
+checkpoint_path: &checkpoint_path './projects/baselines/models/palette/model_1500.pt'
+#
+# Experiment
+#
+experiment:
+  name: CODE_CLEANUP
+  task: palette
+  weights: ./projects/baselines/models/palette/model_1500.pt
+
+device: gpu
+configurator:
+  module_name: core.Configurator
+  class_name: DLConfigurator
+  params:
+#
+# Model
+#
+model:
+  module_name: model_zoo.ddpm
+  class_name: DDPM
+  params:
+    spatial_dims: 2
+    in_channels: 2
+    out_channels: 1
+    num_channels: 
+      - 128
+      - 256
+      - 256
+    attention_levels:
+      - False
+      - True
+      - True
+    num_res_blocks: 1
+    num_head_channels: 256
+
+    # Scheduling and noising scheme
+    train_scheduler: "ddpm"
+    inference_scheduler: "ddpm"
+    inference_steps: 1000
+    noise_level_recon: 999
+    noise_type: "gaussian"
+    prediction_type: "epsilon"
+
+    image_path: './projects/mededit/images/'
+
+#
+# Trainer
+#
+trainer:
+
+#
+# Downstream tasks
+#
+downstream_tasks:  
+  editing:
+    module_name: projects.mededit.DownstreamEvaluator
+    class_name: Editor
+    checkpoint_path: *checkpoint_path
+    params:
+      encoding_ratio: 
+      resample_steps:
+    data_loader:
+      module_name: core.DataLoader
+      class_name: DefaultDataLoader
+      params:
+        args:
+          target_size: *target_size
+          batch_size: *dbatch_size
+          dataset_module:
+            module_name: data.loaders.atlas_loader
+            class_name: AtlasLoaderPalette
+          data_dir:
+            test:
+              - './data/ATLAS/splits_healthy/Atlas_healthy.csv'
+          label_dir:
+            test:
+              - './data/ATLAS/splits_unhealthy/atlas_test_mask_png.csv'
+          mask_dir:
+            test:
+              - './data/ATLAS/splits_healthy/Atlas_brain_mask_healthy.csv'
+
+    atlas_evaluation_split_data_loader:
+      module_name: core.DataLoader
+      class_name: DefaultDataLoader
+      params:
+        args:
+          target_size: *target_size
+          batch_size: *dbatch_size
+          dataset_module:
+            module_name: data.loaders.atlas_loader
+            class_name: AtlasLoader
+          data_dir:
+            test:
+              - './data/ATLAS/splits_unhealthy/atlas_test_png.csv'
+

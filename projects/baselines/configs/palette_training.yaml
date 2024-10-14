@@ -1,0 +1,93 @@
+name: mededit
+target_size: &target_size !!python/tuple [128, 128]
+train_batch_size: &tbatch_size 32
+checkpoint_path: &checkpoint_path './projects/baselines/weights/runs/'
+#
+# Experiment
+#
+experiment:
+  name: Palette training
+  task: train
+  weights: 
+
+device: gpu
+configurator:
+  module_name: core.Configurator
+  class_name: DLConfigurator
+  params:
+#
+# Model
+#
+model:
+  module_name: model_zoo.ddpm
+  class_name: DDPM
+  params:
+    spatial_dims: 2
+    in_channels: 2
+    out_channels: 1
+    num_channels: 
+      - 128
+      - 256
+      - 256
+    attention_levels:
+      - False
+      - True
+      - True
+    num_res_blocks: 1
+    num_head_channels: 256
+
+    # Scheduling and noising scheme
+    train_scheduler: "ddpm"
+    inference_scheduler: "ddpm"
+    inference_steps: 1000
+    noise_level_recon: 999
+    noise_type: "gaussian"
+    prediction_type: "epsilon"
+
+    image_path: './projects/mededit/images/'
+
+
+#
+# Trainer
+#
+trainer:
+  module_name: projects.mededit.Trainer
+  class_name: PTrainer
+  params:
+    input_size: *target_size
+    checkpoint_path: *checkpoint_path
+    batch_size: *tbatch_size
+    nr_epochs: 2000
+    val_interval: 300
+    training_mode: "palette training"
+    # Loss
+    loss:
+      module_name: optim.losses.ln_losses
+      class_name: L2
+      params:
+    optimizer_params:
+      lr: 1.0e-4
+  # Data Loader
+  data_loader:
+    # Atlas-T1
+    module_name: core.DataLoader
+    class_name: DefaultDataLoader
+    params:
+      args:
+        dilation_kernel: 3
+        target_size: *target_size
+        batch_size: *tbatch_size
+        dataset_module:
+          module_name: data.loaders.atlas_loader
+          class_name: AtlasLoaderPalette
+        data_dir:
+          train:
+            - './data/ATLAS/splits_unhealthy/atlas_train_png.csv'
+          val:  
+            - './data/ATLAS/splits_unhealthy/atlas_val_png.csv'
+        label_dir:
+          train:
+            - './data/ATLAS/splits_unhealthy/atlas_train_mask_png.csv'
+          val:
+            - './data/ATLAS/splits_unhealthy/atlas_val_mask_png.csv'
+
