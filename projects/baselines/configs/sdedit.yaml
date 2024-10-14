@@ -1,14 +1,14 @@
 name: sdedit
 target_size: &target_size !!python/tuple [128, 128]
 downstream_batch_size: &dbatch_size 32
-checkpoint_path: &checkpoint_path './projects/mededit/models/diffusion_pretraining/model_1500.pt'
+checkpoint_path: &checkpoint_path './projects/mededit/models/diffusion_pretraining/model_pretraining_1500.pt'
 #
 # Experiment
 #
 experiment:
   name: CODE_CLEANUP
   task: sdedit
-  weights: ./projects/mededit/models/diffusion_pretraining/model_1500.pt # base semantic synth model trained on percentile stratified train/val/test data
+  weights: ./projects/mededit/models/diffusion_pretraining/model_pretraining_1500.pt # base semantic synth model trained on percentile stratified train/val/test data
 
 device: gpu
 configurator:
