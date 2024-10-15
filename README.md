@@ -19,30 +19,6 @@ MedEdit: Counterfactual Diffusion-based Image Editing on Brain MRI
 <img src="https://github.com/Malekba98/MedEdit/blob/main/assets/method_animation.gif">
 </p>
 
-## Citation
-
-If you find our work useful, please cite our paper:
-```
-@InProceedings{alaya2024mededit,
-author="Alaya, Malek Ben and Lang, Daniel M. and Wiestler, Benedikt and Schnabel, Julia A. and Bercea, Cosmin I.",
-title="MedEdit: Counterfactual Diffusion-Based Image Editing on Brain MRI",
-booktitle="MICCAI workshop on Simulation and Synthesis in Medical Imaging",
-year="2025",
-publisher="Springer Nature Switzerland",
-pages="167--176",
-}
-```
-```
-@misc{alaya2024mededitcounterfactualdiffusionbasedimage,
-      title={MedEdit: Counterfactual Diffusion-based Image Editing on Brain MRI}, 
-      author={Malek Ben Alaya and Daniel M. Lang and Benedikt Wiestler and Julia A. Schnabel and Cosmin I. Bercea},
-      year={2024},
-      eprint={2407.15270},
-      archivePrefix={arXiv},
-      primaryClass={eess.IV},
-      url={https://arxiv.org/abs/2407.15270}, 
-}
-```
 
 > **Abstract:** *Denoising diffusion probabilistic models enable high fidelity image synthesis and editing. In biomedicine, these models facilitate counterfactual image editing, producing pairs of images where one is edited to simulate hypothetical conditions. For example, they can model the progression of specific diseases, such as stroke lesions. However, current image editing techniques often fail to generate realistic biomedical counterfactuals, either by inadequately modeling indirect pathological effects like brain atrophy or by excessively altering the scan, which disrupts correspondence to the original images.*
 >
@@ -123,7 +99,30 @@ python core/Main.py --config_path ./projects/baselines/configs/naive_repaint.yam
 ```
 > *SDEdit and Naive RePaint use the same pre-trained diffusion model used in MedEdit. Make sure to move the model generated during the training of palette to the specified directory in the configuration file palette.yaml. Alternatively, you can store the trained model from <a href="https://www.dropbox.com/scl/fi/z9ly5pvt02zex3xshpm65/model_palette_1500.pt?rlkey=ny2wittitxt9sp7zjvg84v39y&st=fzyiqs0l&dl=0"> HERE</a> into the specified directory to skip the training part.*
 
+## Citation
 
+If you find our work useful, please cite our paper:
+```
+@InProceedings{alaya2024mededit,
+author="Alaya, Malek Ben and Lang, Daniel M. and Wiestler, Benedikt and Schnabel, Julia A. and Bercea, Cosmin I.",
+title="MedEdit: Counterfactual Diffusion-Based Image Editing on Brain MRI",
+booktitle="MICCAI workshop on Simulation and Synthesis in Medical Imaging",
+year="2025",
+publisher="Springer Nature Switzerland",
+pages="167--176",
+}
+```
+```
+@misc{alaya2024mededitcounterfactualdiffusionbasedimage,
+      title={MedEdit: Counterfactual Diffusion-based Image Editing on Brain MRI}, 
+      author={Malek Ben Alaya and Daniel M. Lang and Benedikt Wiestler and Julia A. Schnabel and Cosmin I. Bercea},
+      year={2024},
+      eprint={2407.15270},
+      archivePrefix={arXiv},
+      primaryClass={eess.IV},
+      url={https://arxiv.org/abs/2407.15270}, 
+}
+```
 
 # That's it, enjoy! :rocket:
 
