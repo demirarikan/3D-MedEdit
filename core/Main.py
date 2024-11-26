@@ -130,7 +130,8 @@ if __name__ == "__main__":
                 args.config_path
             )
         )
-    except:
+    except Exception as e:
+        print(e)
         logging.error(
             "[IML-COMPAI-DL::main] ERROR: Invalid configuration file at: {}, exiting...".format(
                 args.config_path
