@@ -1,0 +1,73 @@
+name: mededit
+target_size: &target_size !!python/tuple [128, 128]
+train_batch_size: &tbatch_size 10
+checkpoint_path: &checkpoint_path './projects/3dmededit/weights/runs/'
+#
+# Experiment
+#
+experiment:
+  name: vqvae_training
+  task: train
+  weights: 
+
+device: gpu
+configurator:
+  module_name: core.Configurator
+  class_name: DLConfigurator
+  params:
+#
+# Model
+#
+model:
+  module_name: model_zoo.vqvae
+  class_name: VQVAE
+  params:
+    spatial_dims: 3
+    in_channels: 1
+    out_channels: 1
+    upsample_parameters:
+      - [2, 4, 1, 1, 0]
+      - [2, 4, 1, 1, 0]
+      - [2, 4, 1, 1, 0]
+
+#
+# Trainer
+#
+trainer:
+  module_name: projects.3dmededit.vqvae_trainer
+  class_name: VQVAETrainer
+  params:
+    input_size: *target_size
+    checkpoint_path: *checkpoint_path
+    batch_size: *tbatch_size
+    nr_epochs: 1000
+    val_interval: 10
+    training_mode: "vqvae"
+    save_interval: 50
+    # Loss
+    loss:
+      module_name: optim.losses.ln_losses
+      class_name: L1
+      params:
+    optimizer_params:
+      lr: 1.0e-4
+  # Data Loader
+  data_loader:
+    # Atlas-T1
+    module_name: data.loaders.atlas_3d_loader
+    class_name: Atlas3DLoader
+    params:
+      args:
+        target_size: *target_size
+        batch_size: *tbatch_size
+        dataset_module:
+          module_name: data.loaders.atlas_3d_loader
+          class_name: Atlas3DDataset
+        data_dir:
+          train:
+            # - './data/atlas_3d_splits/atlas_small_test.csv'
+            - './data/atlas_3d_splits/atlas_3d_train.csv'
+          val:  
+            # - './data/atlas_3d_splits/atlas_small_test.csv'
+            - './data/atlas_3d_splits/atlas_3d_val.csv'
+
