@@ -221,30 +221,6 @@ class Slice(Transform):
         img_slice = img[mid_slice, :, :]
         return img_slice
 
-
-class Pad(Transform):
-    """
-    Pad with zeros
-    """
-
-    backend = [TransformBackends.TORCH, TransformBackends.NUMPY]
-
-    def __init__(self, pid=(1, 1)):
-        self.pid = pid
-
-    def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
-        img = torch.squeeze(img)
-        max_dim = max(img.shape[0], img.shape[1])
-        x = max_dim - img.shape[0]
-        y = max_dim - img.shape[1]
-
-        self.pid = (int(y / 2), y - int(y / 2), int(x / 2), x - int(x / 2))
-        pad_val = torch.min(img)
-        img_pad = F.pad(img, self.pid, "constant", pad_val)
-
-        return img_pad
-
-
 class Zoom(Transform):
     """
     Resize 3d volumes
@@ -260,3 +236,44 @@ class Zoom(Transform):
         if len(img.shape) == 3:
             img = img[None, ...]
         return F.interpolate(img, size=self.input_size, mode=self.mode)[0]
+
+class AtlasAssertChannelFirst(Transform):
+    """
+    Assert channel is first and permute otherwise in Atlas dataset
+    """
+
+    def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
+        assert (
+            len(img.shape) == 4
+        ), f"AssertChannelFirst:: Image should have 4 dimensions, instead of {len(img.shape)}"
+        return img.permute(0, 2, 3, 1)
+
+class AddChannelIfNeeded3D(Transform):
+    """
+    Adds a 1-length channel dimension to the input image, if input is 2D
+    """
+
+    backend = [TransformBackends.TORCH, TransformBackends.NUMPY]
+
+    def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
+        """
+        Apply the transform to `img`.
+        """
+        if len(img.shape) == 3:
+            # print(f'Added channel: {(img[None,...].shape)}')
+            return img[None, ...]
+        else:
+            return img
+
+class Pad3d(Transform):
+    """
+    Pad with zeros
+    """
+    backend = [TransformBackends.TORCH, TransformBackends.NUMPY]
+
+    def __init__(self, pad):
+        self.pad = pad
+
+    def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
+        return F.pad(img, self.pad, mode="constant", value=0)
+
