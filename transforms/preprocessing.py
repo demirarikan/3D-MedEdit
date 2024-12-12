@@ -277,3 +277,22 @@ class Pad3d(Transform):
     def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
         return F.pad(img, self.pad, mode="constant", value=0)
 
+class Resize(Transform):
+    """
+    Upsample
+    """
+    backend = [TransformBackends.TORCH, TransformBackends.NUMPY]
+
+    def __init__(self, size, mode="trilinear"):
+        self.size = size
+        self.mode = mode
+
+    def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
+        if len (img.shape) not in [4, 5]:
+            raise ValueError("Image should have 4 or 5 dimensions")
+        if len(img.shape) == 4:
+            img = img[None, ...]
+            img = F.interpolate(img, size=self.size, mode=self.mode)
+            return img.squeeze(0)
+        else:
+            return F.interpolate(img, size=self.size, mode=self.mode)

@@ -1,7 +1,4 @@
-from core.DataLoader import DefaultDataset, DefaultDataLoader
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2 as cv
+from core.DataLoader import DefaultDataLoader
 import glob
 import os
 import logging
@@ -12,6 +9,7 @@ from transforms.preprocessing import (
     ReadImage,
     To01,
     Pad3d,
+    Resize,
 )
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -25,7 +23,7 @@ class Atlas3DDataset():
         file_type="",
         label_dir=None,
         mask_dir=None,
-        target_size=(64, 64),
+        target_size=(224, 224, 224),
         test=False,
     ):
         self.label_dir = label_dir
@@ -59,9 +57,10 @@ class Atlas3DDataset():
                 ReadImage(),
                 To01(), 
                 AddChannelIfNeeded3D(),
-                AtlasAssertChannelFirst(),
-                transforms.Resize(self.target_size),
-                Pad3d((0,0,0,0,3,3))
+                # AtlasAssertChannelFirst(),
+                Pad3d((21,21,3,3,21,21)),
+                Resize(self.target_size),
+                # transforms.Resize(self.target_size),
             ]
         )
         return default_t
@@ -72,9 +71,10 @@ class Atlas3DDataset():
                 ReadImage(),
                 To01(),
                 AddChannelIfNeeded3D(),
-                AtlasAssertChannelFirst(),
-                transforms.Resize(self.target_size),
-                Pad3d((0,0,0,0,3,3))
+                # AtlasAssertChannelFirst(),
+                Pad3d((21,21,3,3,21,21)),
+                Resize(self.target_size),
+                # transforms.Resize(self.target_size),
             ]
         )
         return default_t
@@ -85,7 +85,7 @@ class Atlas3DDataset():
                 ReadImage(),
                 To01(),
                 AddChannelIfNeeded3D(),
-                AtlasAssertChannelFirst(),
+                # AtlasAssertChannelFirst(),
                 transforms.Resize(self.target_size),
             ]
         )
@@ -97,7 +97,7 @@ class Atlas3DDataset():
                 ReadImage(),
                 To01(),
                 AddChannelIfNeeded3D(),
-                AtlasAssertChannelFirst(),
+                # AtlasAssertChannelFirst(),
                 transforms.Resize(self.target_size),
             ]
         )
@@ -190,24 +190,75 @@ class Atlas3DLoader(DefaultDataLoader):
             drop_last=self.drop_last,
         )
 
-if __name__ == "__main__":
-    from torch.nn import functional as F
-    dataset_path = "/vol/ciamspace/datasets/atlas/processed/lin/"
+# if __name__ == "__main__":
+#     import numpy as np
+#     import matplotlib.pyplot as plt
+#     import cv2 as cv
+#     import nibabel
 
-    test_vol = "patient_1_sub-r001s001_T1_lin.nii.gz"
+        
+#     def save_slices(slices, file_name, title=""):
+#         """ Function to save row of image slices """
+#         fig, axes = plt.subplots(1, len(slices))
+#         for i, slice in enumerate(slices):
+#             axes[i].imshow(slice.T, cmap="gray", origin="lower")
+#         plt.title(f"{title}")
+#         plt.savefig(f"{file_name}.png")
 
-    file_type = ".nii.gz"
+#     dataset_path = "/vol/ciamspace/datasets/atlas/processed/lin/"
 
-    target_size = (128, 128)
+#     test_vol = "patient_2_sub-r001s002_T1_lin.nii.gz"
 
-    ds = Atlas3DDataset(dataset_path, file_type, target_size=target_size)
-    print(ds[0][0].shape)
-    out = F.pad(ds[0][0], (0, 0, 0, 0, 1,1), "constant", 0)
-    print(out.shape)
+#     file_type = ".nii.gz"
 
-    # print(len(ds))
-    # print(ds[0][0].shape)
+#     #read the volume using nibabel
+#     img = nibabel.load(dataset_path + test_vol)
+#     img_data = img.get_fdata()
+#     # img_data = np.rot90(img_data, 1)
+#     print(img_data.shape)
+#     slice_0 = img_data[80, :, :]
+#     slice_1 = img_data[:, 80, :]
+#     slice_2 = img_data[:, :, 80]
+#     save_slices([slice_0, slice_1, slice_2], "raw", title="not processed 182x218x182")
 
+#     target_size = (224, 224, 224)
+
+#     test_ds_path = ["data/atlas_3d_splits/atlas_small_test.csv"]
+#     # ds = Atlas3DDataset(dataset_path, file_type, target_size=target_size)
+#     ds = Atlas3DDataset(data_dir=test_ds_path, target_size=target_size)  
+#     print(len(ds))
+#     print(ds[0][0].shape)
+
+#     ds_slice_0 = ds[0][0][0][80, :, :]
+#     ds_slice_1 = ds[0][0][0][:, 80, :]
+#     ds_slice_2 = ds[0][0][0][:, :, 80]
+
+#     save_slices([ds_slice_0, ds_slice_1, ds_slice_2], "processed_224", title="only padding 224x224x224")
+
+#     # 192 
+#     target_size = (192, 192, 192)
+#     ds = Atlas3DDataset(data_dir=test_ds_path, target_size=target_size)  
+#     print(len(ds))
+#     print(ds[0][0].shape)
+
+#     ds_slice_0 = ds[0][0][0][80, :, :]
+#     ds_slice_1 = ds[0][0][0][:, 80, :]
+#     ds_slice_2 = ds[0][0][0][:, :, 80]
+
+#     save_slices([ds_slice_0, ds_slice_1, ds_slice_2], "processed_192", title="padding resize 192x192x192")
+
+
+#     # 128
+#     target_size = (128, 128, 128)
+#     ds = Atlas3DDataset(data_dir=test_ds_path, target_size=target_size)  
+#     print(len(ds))
+#     print(ds[0][0].shape)
+
+#     ds_slice_0 = ds[0][0][0][80, :, :]
+#     ds_slice_1 = ds[0][0][0][:, 80, :]
+#     ds_slice_2 = ds[0][0][0][:, :, 80]
+
+#     save_slices([ds_slice_0, ds_slice_1, ds_slice_2], "processed_128", title="padding resize 128x128x128")
     
     
     
