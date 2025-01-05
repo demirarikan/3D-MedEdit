@@ -8,9 +8,15 @@ import random
     The result will be a csv file for each specified set.
 """
 
-DATASET_DIR = os.path.abspath("/vol/ciamspace/datasets/atlas/processed/lin")
+upenn = "/vol/ciamspace/datasets/upenn-gbm/processed/registered_to_mni152"
+atlas_skull_stripped = "/vol/ciamspace/datasets/atlas/processed/skull_stripped"
+brats_train = "/vol/ciamspace/datasets/brats/brats_20/processed/registered_mni152_1mm/train_data"
+brats_val = "/vol/ciamspace/datasets/brats/brats_20/processed/registered_mni152_1mm/val_data"
+ixi_skull_stipped = "/vol/ciamspace/datasets/ixi/processed/skull_stripped"
+
+DATASET_DIR = os.path.abspath(atlas_skull_stripped)
 OUTPUT_DIR = os.path.abspath(".") # Output directory for the csv files
-DATASET_NAME = "atlas_3d"
+DATASET_NAME = "atlas_skull_stripped"
 EXTENSION = ".nii.gz" # File extension of the dataset
 TRAIN_RATIO = 0.8 # Ratio of the training set
 VAL_RATIO = 0.1 # Ratio of the validation set
@@ -19,7 +25,11 @@ SEED = 42 # Seed for the random number generator
 
 def split_data(dataset_dir, dataset_name, output_dir, extension, train_ratio, val_ratio, test_ratio, seed):
     random.seed(seed)
-    files = glob.glob(os.path.join(dataset_dir, "*" + extension))
+    files = glob.glob(
+        fr'{DATASET_DIR}/*T1_lin{EXTENSION}'
+        # os.path.join(dataset_dir, "*" + extension)
+        )
+    files = [file for file in files if "_mask" not in file]
     random.shuffle(files)
     total_files = len(files)
     train_files = files[:int(total_files * train_ratio)]
