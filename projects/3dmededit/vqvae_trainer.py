@@ -126,10 +126,14 @@ class VQVAETrainer(Trainer):
                     volume = volume.to(self.device)
                     reconstruction, quant_loss = self.model(volume)
 
-                    if batch_idx == 1:
+                    if batch_idx == 0:
                         wandb.log({
-                            "reconstruction": wandb.Image(reconstruction[0, 0, 100].cpu().detach().numpy() * 255),
-                            "original": wandb.Image(volume[0, 0, 100].cpu().detach().numpy() * 255),
+                            "reconstruction1": wandb.Image(reconstruction[0][0][80, :, :].cpu().detach().numpy() * 255),
+                            "reconstruction2": wandb.Image(reconstruction[0][0][:, 80, :].cpu().detach().numpy() * 255),
+                            "reconstruction3": wandb.Image(reconstruction[0][0][:, :, 80].cpu().detach().numpy() * 255),
+                            "original1": wandb.Image(volume[0][0][80, :, :].cpu().detach().numpy() * 255),
+                            "original2": wandb.Image(volume[0][0][:, 80, :].cpu().detach().numpy() * 255),
+                            "original3": wandb.Image(volume[0][0][:, :, 80].cpu().detach().numpy() * 255),
                         })
 
 
@@ -161,7 +165,6 @@ class VQVAETrainer(Trainer):
 
             total_l1_loss = 0
             total_mse_loss = 0
-            num_samples = 0
 
             with torch.no_grad():
                 for batch_idx, (volume, _) in enumerate(test_data):
@@ -169,20 +172,19 @@ class VQVAETrainer(Trainer):
                     reconstruction, quant_loss = self.model(volume)
 
                     batch_size = volume.size(0)  # Get batch size
-                    l1_loss = torch.nn.functional.l1_loss(reconstruction, volume, reduction='sum')  
-                    mse_loss = torch.nn.functional.mse_loss(reconstruction, volume, reduction='sum')
+                    l1_loss = torch.nn.functional.l1_loss(reconstruction, volume, reduction='mean')  
+                    mse_loss = torch.nn.functional.mse_loss(reconstruction, volume, reduction='mean')
 
                     total_l1_loss += l1_loss.item()
                     total_mse_loss += mse_loss.item()
-                    num_samples += batch_size
 
             
                     for i in range(batch_size):
                         wandb.log({
-                                "reconstruction_slice_1": wandb.Image(reconstruction[i, 0, 100].cpu().detach().numpy() * 255),
+                                "reconstruction_slice_1": wandb.Image(reconstruction[i, 0, 100, :, :].cpu().detach().numpy() * 255),
                                 "reconstruction_slice_2": wandb.Image(reconstruction[i, 0, :, 75, :].cpu().detach().numpy() * 255),
                                 "reconstruction_slice_3": wandb.Image(reconstruction[i, 0, :, :, 75].cpu().detach().numpy() * 255),
-                                "original_slice_1": wandb.Image(volume[i, 0, 100].cpu().detach().numpy() * 255),
+                                "original_slice_1": wandb.Image(volume[i, 0, 100, :, :].cpu().detach().numpy() * 255),
                                 "original_slice_2": wandb.Image(volume[i, 0, :, 75, :].cpu().detach().numpy() * 255),
                                 "original_slice_3": wandb.Image(volume[i, 0, :, :, 75].cpu().detach().numpy() * 255),
                             })
@@ -194,8 +196,8 @@ class VQVAETrainer(Trainer):
                             recon_scan.cpu().detach().numpy(),
                         )
 
-            average_l1_loss = total_l1_loss / num_samples
-            average_mse_loss = total_mse_loss / num_samples
+            average_l1_loss = total_l1_loss / len(test_data)
+            average_mse_loss = total_mse_loss / len(test_data)
 
             results = {
                 "test_l1": average_l1_loss, 
