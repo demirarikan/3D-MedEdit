@@ -1,14 +1,15 @@
 name: mededit
-target_size: &target_size !!python/tuple [128, 128]
-train_batch_size: &tbatch_size 10
+target_size: &target_size !!python/tuple [192, 192, 192]
+train_batch_size: &tbatch_size 2
 checkpoint_path: &checkpoint_path './projects/3dmededit/weights/runs/'
+seed: 2109
 #
 # Experiment
 #
 experiment:
-  name: vqvae_training
-  task: train
-  weights: projects/3dmededit/weights/runs/2024_11_29_14_46_21_050670/best.pt
+  name: vqvae_evaluation
+  task: evaluation
+  weights: projects/3dmededit/weights/runs/192-192-192-atlas-vqvae/best_epoch_255.pt
 
 device: gpu
 configurator:
@@ -30,46 +31,25 @@ model:
       - [2, 4, 1, 1, 0]
       - [2, 4, 1, 1, 0]
 
-#
-# Trainer
-#
 trainer:
-  module_name: projects.3dmededit.vqvae_trainer
-  class_name: VQVAETrainer
-  params:
-    input_size: *target_size
+
+downstream_tasks:
+  evaluation:
+    module_name: projects.3dmededit.evaluator
+    class_name: AutoencodeEvaluator
     checkpoint_path: *checkpoint_path
-    batch_size: *tbatch_size
-    nr_epochs: 0
-    val_interval: 0
-    training_mode: "vqvae"
-    save_interval: 0
-    test_res_dir: './projects/3dmededit/results/'
-    # Loss
-    loss:
-      module_name: optim.losses.ln_losses
-      class_name: L1
+    data_loader:
+      module_name: data.loaders.atlas_3d_loader
+      class_name: Atlas3DLoader
+      datasets:
+        - atlas
       params:
-    optimizer_params:
-      lr: 1.0e-4
-  # Data Loader
-  data_loader:
-    # Atlas-T1
-    module_name: data.loaders.atlas_3d_loader
-    class_name: Atlas3DLoader
-    params:
-      args:
-        target_size: *target_size
-        batch_size: *tbatch_size
-        dataset_module:
-          module_name: data.loaders.atlas_3d_loader
-          class_name: Atlas3DDataset
-        data_dir:
-          train:
-            # - './data/atlas_3d_splits/atlas_small_test.csv'
-            - './data/atlas_3d_splits/atlas_3d_train.csv'
-          val:  
-            # - './data/atlas_3d_splits/atlas_small_test.csv'
-            - './data/atlas_3d_splits/atlas_3d_val.csv'
-          test:
-            - './data/atlas_3d_splits/atlas_3d_test.csv'
+        args:
+          target_size: *target_size
+          batch_size: *tbatch_size
+          dataset_module:
+            module_name: data.loaders.atlas_3d_loader
+            class_name: Atlas3DDataset
+          data_dir:
+            test:
+              - './data/atlas_3d_splits/atlas_3d_test.csv'

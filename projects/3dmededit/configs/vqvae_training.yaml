@@ -1,12 +1,13 @@
 name: mededit
-target_size: &target_size !!python/tuple [128, 128]
-train_batch_size: &tbatch_size 10
+target_size: &target_size !!python/tuple [128, 128, 128]
+train_batch_size: &tbatch_size 16
 checkpoint_path: &checkpoint_path './projects/3dmededit/weights/runs/'
+seed: 2109
 #
 # Experiment
 #
 experiment:
-  name: vqvae_training
+  name: vqvae_training_ixi_atlas_1
   task: train
   weights: 
 
@@ -29,6 +30,7 @@ model:
       - [2, 4, 1, 1, 0]
       - [2, 4, 1, 1, 0]
       - [2, 4, 1, 1, 0]
+    # output_act: 'sigmoid'
 
 #
 # Trainer
@@ -41,9 +43,10 @@ trainer:
     checkpoint_path: *checkpoint_path
     batch_size: *tbatch_size
     nr_epochs: 1000
-    val_interval: 10
+    val_interval: 5
     training_mode: "vqvae"
     save_interval: 50
+    test_res_dir: './projects/3dmededit/results/'
     # Loss
     loss:
       module_name: optim.losses.ln_losses
@@ -66,8 +69,13 @@ trainer:
         data_dir:
           train:
             # - './data/atlas_3d_splits/atlas_small_test.csv'
-            - './data/atlas_3d_splits/atlas_3d_train.csv'
+            - './data/atlas_skull_stripped/atlas_skull_stripped_train.csv'
+            - './data/ixi_skull_stripped/ixi_train.csv'
           val:  
             # - './data/atlas_3d_splits/atlas_small_test.csv'
-            - './data/atlas_3d_splits/atlas_3d_val.csv'
+            - './data/atlas_skull_stripped/atlas_skull_stripped_val.csv'
+            - './data/ixi_skull_stripped/ixi_val.csv'
+          test:
+            - './data/atlas_skull_stripped/atlas_skull_stripped_test.csv'
+            - './data/ixi_skull_stripped/ixi_test.csv'
 
