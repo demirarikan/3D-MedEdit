@@ -5,10 +5,10 @@ Default class for configuring DL experiments
 
 """
 
-import copy
 import logging
 
 import torch
+from torch.cuda.amp import autocast
 
 from dl_utils.config_utils import check_config_file, import_module, set_seed
 
@@ -36,8 +36,11 @@ class DLConfigurator(object):
             )
             return
 
-        # set seeds
-        set_seed(2109)
+        if "seed" in self.dl_config.keys():
+            seed = self.dl_config["seed"]
+        else:
+            seed = None
+        set_seed(seed)
 
         # init model and device
         dev = self.dl_config["device"]
@@ -50,18 +53,20 @@ class DLConfigurator(object):
             self.dl_config["model"]["module_name"],
             self.dl_config["model"]["class_name"],
         )
-        self.model = model_class(**(self.dl_config["model"]["params"]))
+        self.model = model_class(
+            **(self.dl_config["model"]["params"])
+        )  ## Initializes the model
 
-    def start_training(self, global_model: dict = dict()):
+    def start_training(self, task="train", global_model: dict = dict()):
         # Trainer Init
-        data = self.load_data(self.dl_config["trainer"]["data_loader"])
+        data = self.load_data(self.dl_config["trainer"]["data_loader"], train=True)
         trainer_class = import_module(
             self.dl_config["trainer"]["module_name"],
             self.dl_config["trainer"]["class_name"],
         )
         self.trainer = trainer_class(
             training_params=self.dl_config["trainer"]["params"],
-            model=copy.deepcopy(self.model),
+            model=self.model,
             data=data,
             device=self.device,
             log_wandb=True,
@@ -76,22 +81,64 @@ class DLConfigurator(object):
         if "model_weights" in global_model.keys():
             model_state = global_model["model_weights"]
             logging.info("[Configurator::train::INFO]: Model weights loaded!")
+        elif "state_dict" in global_model.keys():
+            model_state = global_model["state_dict"]
+            logging.info(
+                "[Configurator::train::INFO]: Model weights loaded from state_dict (Is this a stable diffusion checkpoint?)"
+            )
+
+        # If not using autocast, delete ema model parameters
+        use_autocast = (
+            self.dl_config["use_autocast"]
+            if "use_autocast" in self.dl_config.keys()
+            else False
+        )
+        logging.info(
+            f"Autocast: {use_autocast}. If using autocast, make sure to use ema checkpoints."
+        )
+        if not use_autocast and model_state != None:
+            if "model_ema.decay" in model_state.keys():
+                del model_state["model_ema.decay"]
+            if "model_ema.num_updates" in model_state.keys():
+                del model_state["model_ema.num_updates"]
+
         if "optimizer_weights" in global_model.keys():
             opt_state = global_model["optimizer_weights"]
         if "epoch" in global_model.keys():
             epoch = global_model["epoch"]
 
-        logging.info(
-            "[Configurator::train]: ################ Starting training ################"
-        )
-        trained_model_state, trained_opt_state = self.trainer.train(
-            model_state, opt_state, epoch
-        )
-        logging.info(
-            "[Configurator::train]: ################ Finished training ################"
-        )
+        with autocast(enabled=use_autocast):
+            if task == "val":
+                logging.info(
+                    "[Configurator::train]: ################ Starting validation ################"
+                )
+                self.trainer.test(model_state, data.val_dataloader(), task="Val")
+                logging.info(
+                    "[Configurator::train]: ################ Finished validation ################"
+                )
+                trained_model_state = model_state
+            else:
+                logging.info(
+                    "[Configurator::train]: ################ Starting training ################"
+                )
+                trained_model_state, trained_opt_state = self.trainer.train(
+                    model_state, opt_state, epoch
+                )
+                logging.info(
+                    "[Configurator::train]: ################ Finished training ################"
+                )
 
-    def start_editing(self, global_model, task):
+            logging.info(
+                "[Configurator::train]: ################ Starting testing ################"
+            )
+            self.trainer.test(trained_model_state, data.test_dataloader(), task="Test")
+            logging.info(
+                "[Configurator::train]: ################ Finished testing ################"
+            )
+            self.start_evaluations(trained_model_state)
+
+    def start_evaluations(self, global_model):
+        # Downstream Tasks
         self.downstream_tasks = []
         nr_tasks = len(self.dl_config["downstream_tasks"])
         for idx, dst_name in enumerate(self.dl_config["downstream_tasks"]):
@@ -104,25 +151,25 @@ class DLConfigurator(object):
             downstream_class = import_module(
                 dst_config["module_name"], dst_config["class_name"]
             )
-            data = self.load_data(dst_config["data_loader"], train=True)
-            reference_atlas_evaluation_split = self.load_data(
-                dst_config["atlas_evaluation_split_data_loader"]
-            )
-
+            data = self.load_data(dst_config["data_loader"], train=False)
             if "params" in dst_config.keys():
                 dst = downstream_class(
+                    dst_name,
                     self.model,
                     self.device,
+                    data,
                     dst_config["checkpoint_path"],
                     **dst_config["params"],
                 )
-
-            dst.start_task(
-                global_model=global_model,
-                test_data=data.test_dataloader(),
-                reference_atlas_evaluation_split=reference_atlas_evaluation_split.test_dataloader(),
-                task=task,
-            )
+            else:
+                dst = downstream_class(
+                    dst_name,
+                    self.model,
+                    self.device,
+                    data,
+                    dst_config["checkpoint_path"],
+                )
+            dst.start_task(global_model=global_model)
             logging.info(
                 "[Configurator::eval]: ################ Finished downstream task nr. {}/{} ################".format(
                     idx, nr_tasks
@@ -151,7 +198,7 @@ class DLConfigurator(object):
             data = data_loader_module(
                 {
                     **(data_loader_config["params"]["args"]),
-                    **(data_loader_config["datasets"][dataset_name]),
+                    # **(data_loader_config["datasets"][dataset_name]),
                 }
             )
             downstream_datasets[dataset_name] = data.test_dataloader()

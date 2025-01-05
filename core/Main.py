@@ -79,7 +79,7 @@ class Main(object):
         else:
             wandb.init(project=exp_name, name=task, config=config_dict, id=date_time)
 
-            configurator.start_editing(global_model=checkpoint, task=task)
+            configurator.start_evaluations(global_model=checkpoint)
 
 
 def add_args(parser):
