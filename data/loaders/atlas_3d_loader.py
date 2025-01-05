@@ -10,6 +10,7 @@ from transforms.preprocessing import (
     To01,
     Pad3d,
     Resize,
+    Norm98,
 )
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -28,10 +29,12 @@ class Atlas3DDataset():
     ):
         self.label_dir = label_dir
         self.target_size = target_size
-        if data_dir[0].endswith(".csv"):
-            self.files = get_data_from_csv(data_dir)
-        else:
-            self.files = glob.glob(os.path.join(data_dir, "*" + file_type)) 
+        self.files = []
+        for dir in data_dir:
+            if dir.endswith(".csv"):
+                self.files += get_data_from_csv(data_dir)
+            else:
+                self.files += glob.glob(os.path.join(data_dir, "*" + file_type)) 
 
         self.nr_items = len(self.files)
         logging.info(
@@ -55,7 +58,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
-                To01(), 
+                Norm98(), 
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 Pad3d((21,21,3,3,21,21)),
@@ -69,7 +72,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
-                To01(),
+                Norm98(),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 Pad3d((21,21,3,3,21,21)),
@@ -83,7 +86,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
-                To01(),
+                Norm98(),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 transforms.Resize(self.target_size),
@@ -95,7 +98,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
-                To01(),
+                Norm98(),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 transforms.Resize(self.target_size),
