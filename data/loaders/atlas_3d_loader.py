@@ -32,9 +32,9 @@ class Atlas3DDataset():
         self.files = []
         for dir in data_dir:
             if dir.endswith(".csv"):
-                self.files += get_data_from_csv(data_dir)
+                self.files += get_data_from_csv(dir)
             else:
-                self.files += glob.glob(os.path.join(data_dir, "*" + file_type)) 
+                self.files += glob.glob(os.path.join(dir, "*" + file_type)) 
 
         self.nr_items = len(self.files)
         logging.info(
@@ -58,6 +58,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
+                # To01(),
                 Norm98(), 
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
@@ -72,6 +73,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
+                # To01(),
                 Norm98(),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
@@ -86,6 +88,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
+                # To01(),
                 Norm98(),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
@@ -98,6 +101,7 @@ class Atlas3DDataset():
         default_t = transforms.Compose(
             [
                 ReadImage(),
+                # To01(),
                 Norm98(),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
