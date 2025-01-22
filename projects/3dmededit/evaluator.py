@@ -7,6 +7,7 @@ import torch
 from skimage.metrics import structural_similarity as ssim
 from core.DataLoader import DefaultDataLoader
 import wandb
+import math
 
 class AutoencodeEvaluator(DownstreamEvaluator):
     def __init__(self, dst_name, model, device, data: dict[str, DefaultDataLoader], checkpoint_path):
@@ -17,6 +18,17 @@ class AutoencodeEvaluator(DownstreamEvaluator):
         self.l1_loss = 0
         self.mse_loss = 0
         self.lpips_model = lpips.LPIPS(net='alex')
+
+        self.recon_intensities = {
+            'max': -math.inf,
+            'min': math.inf,
+            'mean': 0
+        }
+        self.volume_intensities = {
+            'max': -math.inf,
+            'min': math.inf,
+            'mean': 0
+        }
 
     def start_task(self, global_model):
         model_weights = None
@@ -47,6 +59,8 @@ class AutoencodeEvaluator(DownstreamEvaluator):
                     "original3": wandb.Image(volume[0][0][:, :, 80].cpu().detach().numpy() * 255),
                 })
 
+                self.update_intensities(volume.detach().cpu(), reconstruction.detach().cpu())
+
                 #l1 loss 
                 self.l1_loss += torch.nn.functional.l1_loss(reconstruction, volume, reduction='mean').item()
                 #mse loss
@@ -63,13 +77,18 @@ class AutoencodeEvaluator(DownstreamEvaluator):
             self.coronal_lpips = torch.cat(self.coronal_lpips)
             self.axial_lpips = torch.cat(self.axial_lpips)
 
+            self.recon_intensities['mean'] /= len(curr_dataloader)
+            self.volume_intensities['mean'] /= len(curr_dataloader)
+
             wandb.log({
                 f'{dataloader_name}_l1_loss': self.l1_loss,
                 f'{dataloader_name}_mse_loss': self.mse_loss,
                 f'{dataloader_name}_ssim': self.ssim,
                 f'{dataloader_name}_sagittal_lpips_dim1': self.sagittal_lpips.mean(),
                 f'{dataloader_name}_coronal_lpips_dim2': self.coronal_lpips.mean(),
-                f'{dataloader_name}_axial_lpips_dim3': self.axial_lpips.mean()
+                f'{dataloader_name}_axial_lpips_dim3': self.axial_lpips.mean(),
+                f'{dataloader_name}_recon_intensities': self.recon_intensities,
+                f'{dataloader_name}_volume_intensities': self.volume_intensities
             })
         
 
@@ -116,3 +135,20 @@ class AutoencodeEvaluator(DownstreamEvaluator):
             reconstruction_i = reconstruction[i].squeeze().cpu().detach().numpy()
             ssim_score = ssim(volume_i, reconstruction_i, data_range=reconstruction_i.max() - reconstruction_i.min())
             self.ssim.append(ssim_score)
+
+    def update_intensities(self, volume, recon):
+        if recon.max() > self.recon_intensities['max']:
+            self.recon_intensities['max'] = recon.max()
+        
+        if recon.min() < self.recon_intensities['min']:
+            self.recon_intensities['min'] = recon.min()
+
+        self.recon_intensities['mean'] += recon.mean()
+        
+        if volume.max() > self.volume_intensities['max']:
+            self.volume_intensities['max'] = volume.max()
+
+        if volume.min() < self.volume_intensities['min']:
+            self.volume_intensities['min'] = volume.min()
+
+        self.volume_intensities['mean'] += volume.mean()

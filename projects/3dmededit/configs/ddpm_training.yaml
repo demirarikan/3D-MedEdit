@@ -1,0 +1,90 @@
+name: mededit
+target_size: &target_size !!python/tuple [128, 128, 128]
+train_batch_size: &tbatch_size 10
+checkpoint_path: &checkpoint_path './projects/3dmededit/weights/runs/'
+seed: 2109
+
+experiment:
+  name: ddpm_training
+  task: train
+  weights: # projects/3dmededit/weights/runs/2025_01_10_11_52_32_286429/best_epoch_785.pt
+
+device: gpu
+configurator:
+  module_name: core.Configurator
+  class_name: DLConfigurator
+  params:
+
+model:
+  module_name: model_zoo.diffusion_model_unet
+  class_name: DiffusionModelUNet
+  params:
+    spatial_dims: 3
+    in_channels: 64
+    out_channels: 64
+
+trainer:
+  module_name: projects.3dmededit.ddpm_trainer
+  class_name: DDPMTrainer
+  params:
+    input_size: *target_size
+    checkpoint_path: *checkpoint_path
+    batch_size: *tbatch_size
+    val_interval: 5
+    save_interval: 50
+    nr_epochs: 1000
+    test_res_dir: './projects/3dmededit/ddpm/results/'
+    # ddpm params
+    num_train_timesteps: 1000
+    schedule: 'cosine'
+    beta_start: 0.0001
+    beta_end: 0.02
+    # loss
+    loss:
+      module_name: optim.losses.ln_losses
+      class_name: L1
+      params:
+    optimizer_params:
+      lr: 1.0e-4
+    # autoencoder
+    autoencoder:
+      spatial_dims: 3
+      in_channels: 1
+      out_channels: 1
+      num_res_channels: 2
+      num_channels: 
+        - 96
+        - 192
+      upsample_parameters:
+        - [2, 4, 1, 1, 0]
+        - [2, 4, 1, 1, 0]
+        # - [2, 4, 1, 1, 0]
+      # output_act: 'sigmoid'
+      downsample_parameters:
+        - [2, 4, 1, 1]
+        - [2, 4, 1, 1]
+        # - [2, 4, 1, 1, 0]
+      checkpoint_path: projects/3dmededit/weights/runs/2025_01_10_11_52_32_286429/best_epoch_785.pt
+  data_loader:
+    module_name: data.loaders.atlas_3d_loader
+    class_name: Atlas3DLoader
+    params:
+      args:
+        drop_last: True
+        target_size: *target_size
+        batch_size: *tbatch_size
+        dataset_module:
+          module_name: data.loaders.atlas_3d_loader
+          class_name: Atlas3DDataset
+        data_dir:
+          train:
+            # - './data/atlas_3d_splits/atlas_small_test.csv'
+            - './data/atlas_skull_stripped/atlas_skull_stripped_train.csv'
+            - './data/ixi_skull_stripped/ixi_train.csv'
+          val:  
+            # - './data/atlas_3d_splits/atlas_small_test.csv'
+            - './data/atlas_skull_stripped/atlas_skull_stripped_val.csv'
+            - './data/ixi_skull_stripped/ixi_val.csv'
+          test:
+            - './data/atlas_skull_stripped/atlas_skull_stripped_test.csv'
+            - './data/ixi_skull_stripped/ixi_test.csv'
