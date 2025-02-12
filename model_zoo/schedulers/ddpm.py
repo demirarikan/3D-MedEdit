@@ -240,6 +240,8 @@ class DDPMScheduler(Scheduler):
 
         # 1. compute alphas, betas
         alpha_prod_t = self.alphas_cumprod[timestep]
+        if alpha_prod_t >= 1:
+            alpha_prod_t = 0.9999
         alpha_prod_t_prev = (
             self.alphas_cumprod[timestep - 1] if timestep > 0 else self.one
         )
