@@ -50,6 +50,7 @@ class DiffusionInferer(Inferer):
         condition: torch.Tensor | None = None,
         mode: str = "crossattn",
         seg: torch.Tensor | None = None,
+        return_noisy_inputs = False,
     ) -> torch.Tensor:
         """
         Implements the forward pass for a supervised training iteration.
@@ -77,6 +78,9 @@ class DiffusionInferer(Inferer):
         #     else diffusion_model
         # )
         prediction = diffusion_model(x=noisy_image, timesteps=timesteps, context=condition)
+
+        if return_noisy_inputs:
+            return prediction, noisy_image
 
         return prediction
 
@@ -363,6 +367,7 @@ class LatentDiffusionInferer(DiffusionInferer):
         mode: str = "crossattn",
         seg: torch.Tensor | None = None,
         quantized: bool = True,
+        return_noisy_inputs = False,
     ) -> torch.Tensor:
         """
         Implements the forward pass for a supervised training iteration.
@@ -399,7 +404,9 @@ class LatentDiffusionInferer(DiffusionInferer):
             timesteps=timesteps,
             condition=condition,
             mode=mode,
+            return_noisy_inputs=return_noisy_inputs,
         )
+        # if return_noisy_inputs if true this is a tuple of (noise_prediction, noisy_inputs)
         return prediction
 
     @torch.no_grad()
