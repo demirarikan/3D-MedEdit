@@ -1,52 +1,74 @@
 name: mededit
 target_size: &target_size !!python/tuple [128, 128, 128]
-train_batch_size: &tbatch_size 4
+train_batch_size: &tbatch_size 8
 checkpoint_path: &checkpoint_path './projects/3dmededit/weights/runs/'
 seed: 2109
-#
-# Experiment
-#
+
 experiment:
-  name: vqvae_evaluation
+  name: ddpm_training
   task: evaluation
-  weights: projects/3dmededit/weights/runs/2025_01_25_14_52_37_047780/best_epoch_925.pt
-  
+  weights: projects/3dmededit/weights/runs/2025_02_04_18_37_30_995454/best_epoch_582.pt
+  #projects/3dmededit/weights/runs/2025_02_04_18_37_30_995454/latest.pt 
+  # projects/3dmededit/weights/runs/2025_01_27_13_32_29_138249/best_epoch_940.pt
+
 device: gpu
 configurator:
   module_name: core.Configurator
   class_name: DLConfigurator
   params:
-#
-# Model
-#
+
 model:
-  module_name: model_zoo.vqvae
-  class_name: VQVAE
+  module_name: model_zoo.diffusion_model_unet
+  class_name: DiffusionModelUNet
   params:
     spatial_dims: 3
-    in_channels: 1
-    out_channels: 1
-    num_res_channels: 2
-    num_channels: 
-      - 96
-      - 192
-    upsample_parameters:
-      - [2, 4, 1, 1, 0]
-      - [2, 4, 1, 1, 0]
-      # - [2, 4, 1, 1, 0]
-    # output_act: 'sigmoid'
-    downsample_parameters:
-      - [2, 4, 1, 1]
-      - [2, 4, 1, 1]
-      # - [2, 4, 1, 1, 0]
+    in_channels: 32
+    out_channels: 32
+    num_channels:
+      - 64
+      - 128
+      - 256
+    attention_levels:
+      - False
+      - True
+      - True
+    num_res_blocks: 1
 
 trainer:
-
 downstream_tasks:
   evaluation:
-    module_name: projects.3dmededit.evaluator
-    class_name: AutoencodeEvaluator
+    module_name: projects.3dmededit.ddpm_evaluator
+    class_name: DDPMEvaluator
     checkpoint_path: *checkpoint_path
+    params:
+      scheduler_params:
+        num_train_timesteps: 1000
+        schedule: 'linear_beta'
+        beta_start: 0.0001
+        beta_end: 0.02
+      autoencoder_params:
+        spatial_dims: 3
+        in_channels: 1
+        out_channels: 1
+        num_channels: 
+          - 128
+          - 256
+        num_res_layers: 2
+        num_res_channels:
+          - 128
+          - 256
+        downsample_parameters:
+          - [2, 4, 1, 1]
+          - [2, 4, 1, 1]
+          # - [2, 4, 1, 1, 0]
+        upsample_parameters:
+          - [2, 4, 1, 1, 0]
+          - [2, 4, 1, 1, 0]
+          # - [2, 4, 1, 1, 0]
+        num_embeddings: 512
+        embedding_dim: 32
+        output_act: tanh
+        checkpoint_path: projects/3dmededit/weights/runs/2025_02_04_11_07_16_544669/best_epoch_990.pt
     data_loader:
       module_name: data.loaders.atlas_3d_loader
       class_name: Atlas3DLoader
