@@ -66,6 +66,7 @@ class Main(object):
         device = "cuda" if self.config_file["device"] == "gpu" else "cpu"
         checkpoint = dict()
         if configurator.dl_config["experiment"]["weights"] is not None:
+            logging.info("[Main::setup_experiment]: Found checkpoint weights")
             checkpoint = torch.load(
                 configurator.dl_config["experiment"]["weights"],
                 map_location=torch.device(device),
@@ -75,7 +76,7 @@ class Main(object):
             wandb.init(
                 project=exp_name, name="Training", config=config_dict, id=date_time
             )
-            configurator.start_training(checkpoint)
+            configurator.start_training(global_model=checkpoint)
         else:
             wandb.init(project=exp_name, name=task, config=config_dict, id=date_time)
 
