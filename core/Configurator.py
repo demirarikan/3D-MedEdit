@@ -197,7 +197,7 @@ class DLConfigurator(object):
         for dataset_name in data_loader_config["datasets"]:
             data = data_loader_module(
                 {
-                    **(data_loader_config["params"]["args"]),
+                    **(data_loader_config["datasets"][dataset_name]["params"]["args"]),
                     # **(data_loader_config["datasets"][dataset_name]),
                 }
             )
