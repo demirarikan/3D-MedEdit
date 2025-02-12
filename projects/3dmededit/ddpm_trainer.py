@@ -8,6 +8,7 @@ import numpy as np
 from model_zoo.inferers.inferer import LatentDiffusionInferer
 from model_zoo.schedulers.ddpm import DDPMScheduler
 from model_zoo.vqvae import VQVAE
+from .evaluator import Evaluator
 
 
 class DDPMTrainer(Trainer):
@@ -18,8 +19,8 @@ class DDPMTrainer(Trainer):
         self.ddpm = model
         self.scheduler = DDPMScheduler(num_train_timesteps=training_params["num_train_timesteps"],
                                        schedule=training_params["schedule"],
-                                    #    **{"beta_start": training_params["beta_start"],
-                                    #       "beta_end": training_params["beta_end"]}
+                                       **{"beta_start": training_params["beta_start"],
+                                          "beta_end": training_params["beta_end"]}
                                         )
         self.inferer = LatentDiffusionInferer(scheduler=self.scheduler,
                                               scale_factor=self.calculate_scale_factor())
@@ -149,7 +150,7 @@ class DDPMTrainer(Trainer):
 
     def test(self, model_weights, test_data, task="Val", optimizer_weights=None, epoch=0):
         self.ddpm.load_state_dict(model_weights)
-        self.optimizer.load_state_dict(optimizer_weights)
+        # self.optimizer.load_state_dict(optimizer_weights)
         self.ddpm.eval()
 
         if task == "Val":
@@ -164,28 +165,38 @@ class DDPMTrainer(Trainer):
 
                     #timesteps
                     timesteps = torch.randint(
-                        low=0, high=self.inferer.scheduler.num_train_timesteps, size=(volume.shape[0],), device=self.device
+                        low=0, 
+                        high=self.inferer.scheduler.num_train_timesteps, 
+                        size=(volume.shape[0],), 
+                        device=self.device
                     )
 
-                    noise_pred = self.inferer(
-                        inputs=volume, autoencoder_model=self.autoencoder, diffusion_model=self.ddpm, noise=noise, timesteps=timesteps
+                    noise_pred, noisy_inputs = self.inferer(
+                        inputs=volume, 
+                        autoencoder_model=self.autoencoder, 
+                        diffusion_model=self.ddpm, noise=noise, 
+                        timesteps=timesteps, 
+                        return_noisy_inputs=True
                     )
 
                     loss = self.criterion_rec(noise_pred, noise)
                     val_loss += loss.item()
 
                     if batch_idx == 0:
-                        recons = self.autoencoder.decode_stage_2_inputs(noise_pred)
+                        noise_sub = noisy_inputs - noise_pred
+                        recons = self.autoencoder.decode_stage_2_outputs(noise_sub)
                         recons = recons.detach().cpu().numpy()
                         volume = volume.detach().cpu().numpy()
                         wandb.log({
-                            "recon_loss": loss.item(),
+                            "val_recon_loss": loss.item(),
                             "reconstruction1": wandb.Image(recons[0][0][80, :, :]*255),
                             "reconstruction2": wandb.Image(recons[0][0][:, 80, :]*255),
                             "reconstruction3": wandb.Image(recons[0][0][:, :, 80]*255),
                             "original1": wandb.Image(volume[0][0][80, :, :]*255),
                             "original2": wandb.Image(volume[0][0][:, 80, :]*255),
                             "original3": wandb.Image(volume[0][0][:, :, 80]*255),
+                            "noise": wandb.Image(noise[0][0][15, :, :]*255),
+                            "predicted_noise": wandb.Image(noise_pred[0][0][15, :, :]*255),
                         })
                     
             val_loss /= len(test_data)
@@ -205,4 +216,69 @@ class DDPMTrainer(Trainer):
             
             logging.info(f"[Trainer::test]: Validation loss: {val_loss}")
             return val_loss
+        
+        elif task == "Test":
+            logging.info("[Trainer::test]: Started test")
+
+            evaluator = Evaluator(self.device)
+            test_loss = 0
+
+            with torch.no_grad():
+                for batch_idx, (volume, _) in enumerate(test_data):
+                    volume = volume.to(self.device)
+
+                    noise = torch.randn_like(self.example_latent).to(self.device)
+
+                    #timesteps
+                    timesteps = torch.randint(
+                        low=0, 
+                        high=self.inferer.scheduler.num_train_timesteps, 
+                        size=(volume.shape[0],), 
+                        device=self.device
+                    )
+
+                    noise_pred, noisy_inputs = self.inferer.sample(
+                        inputs=volume, 
+                        autoencoder_model=self.autoencoder, 
+                        diffusion_model=self.ddpm, noise=noise, 
+                        timesteps=timesteps, 
+                        return_noisy_inputs=True
+                    )
+
+                    loss = self.criterion_rec(noise_pred, noise)
+                    test_loss += loss.item()
+
+                    noise_sub = noisy_inputs - noise_pred
+                    recons = self.autoencoder.decode_stage_2_outputs(noise_sub)
+
+                    evaluator.update_metrics(volume, recons)
+
+                    recons = recons.detach().cpu().numpy()
+                    volume = volume.detach().cpu().numpy()
+
+                    for i in range(len(volume)):
+                        wandb.log({
+                            "test_reconstruction1": wandb.Image(recons[i][0][80, :, :]*255),
+                            "test_reconstruction2": wandb.Image(recons[i][0][:, 80, :]*255),
+                            "test_reconstruction3": wandb.Image(recons[i][0][:, :, 80]*255),
+                            "test_original1": wandb.Image(volume[i][0][80, :, :]*255),
+                            "test_original2": wandb.Image(volume[i][0][:, 80, :]*255),
+                            "test_original3": wandb.Image(volume[i][0][:, :, 80]*255),
+                        })
+
+                    
+
+                test_loss /= len(test_data)
+                avg_l1, avg_mse, avg_ssim, avg_sagittal_lpips, avg_coronal_lpips, avg_axial_lpips = evaluator.compute_metrics()
+                wandb.log({
+                    "test_noise_l1": test_loss,
+                    "test_avg_l1": avg_l1,
+                    "test_avg_mse": avg_mse,
+                    "test_avg_ssim": avg_ssim,
+                    "test_avg_sagittal_lpips": avg_sagittal_lpips,
+                    "test_avg_coronal_lpips": avg_coronal_lpips,
+                    "test_avg_axial_lpips": avg_axial_lpips,
+                })
+        else:
+            raise ValueError("task should be either 'Val' or 'Test'")
 
