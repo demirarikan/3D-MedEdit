@@ -101,7 +101,22 @@ class To01:
             return img / 255
 
         return img / 65536
+    
+class NormalizeRange(Transform):
+    def __init__(self, min_val, max_val):
+        self.min_val = min_val
+        self.max_val = max_val
+        super(NormalizeRange, self).__init__()
 
+    def __call__(self, img):
+        """
+        Apply the transform to `img`.
+        """
+        q = np.percentile(img, 98)
+        clipped = np.clip(img, 0, q)
+        img = (clipped - clipped.min()) / (clipped.max() - clipped.min())
+        scaled = img * (self.max_val - self.min_val) + self.min_val
+        return scaled
 
 class AdjustIntensity:
     def __init__(self):
@@ -275,7 +290,7 @@ class Pad3d(Transform):
         self.pad = pad
 
     def __call__(self, img: NdarrayOrTensor) -> NdarrayOrTensor:
-        return F.pad(img, self.pad, mode="constant", value=0)
+        return F.pad(img, self.pad, mode="constant", value=-1)
 
 class Resize(Transform):
     """

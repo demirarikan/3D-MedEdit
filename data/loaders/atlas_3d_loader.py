@@ -11,6 +11,7 @@ from transforms.preprocessing import (
     Pad3d,
     Resize,
     Norm98,
+    NormalizeRange,
 )
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -59,7 +60,8 @@ class Atlas3DDataset():
             [
                 ReadImage(),
                 # To01(),
-                Norm98(), 
+                # Norm98(), 
+                NormalizeRange(-1, 1),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 Pad3d((21,21,3,3,21,21)),
@@ -74,7 +76,8 @@ class Atlas3DDataset():
             [
                 ReadImage(),
                 # To01(),
-                Norm98(),
+                # Norm98(),
+                NormalizeRange(-1, 1),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 Pad3d((21,21,3,3,21,21)),
@@ -89,7 +92,8 @@ class Atlas3DDataset():
             [
                 ReadImage(),
                 # To01(),
-                Norm98(),
+                # Norm98(),
+                NormalizeRange(-1, 1),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 transforms.Resize(self.target_size),
@@ -102,7 +106,8 @@ class Atlas3DDataset():
             [
                 ReadImage(),
                 # To01(),
-                Norm98(),
+                # Norm98(),
+                NormalizeRange(-1, 1),
                 AddChannelIfNeeded3D(),
                 # AtlasAssertChannelFirst(),
                 transforms.Resize(self.target_size),
