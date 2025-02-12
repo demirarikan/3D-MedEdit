@@ -21,8 +21,10 @@ class VQVAETrainer(Trainer):
 
     def train(self, model_state=None, opt_state=None, start_epoch=0):
         if model_state is not None:
+            logging.info("[Trainer::train]: Loading model state")
             self.model.load_state_dict(model_state)  # load weights
         if opt_state is not None:
+            logging.info("[Trainer::train]: Loading optimizer state")
             self.optimizer.load_state_dict(opt_state)  # load optimizer
         
         epoch_recon_losses = []
@@ -181,12 +183,12 @@ class VQVAETrainer(Trainer):
             
                     for i in range(batch_size):
                         wandb.log({
-                                "reconstruction_slice_1": wandb.Image(reconstruction[i, 0, 100, :, :].cpu().detach().numpy() * 255),
-                                "reconstruction_slice_2": wandb.Image(reconstruction[i, 0, :, 75, :].cpu().detach().numpy() * 255),
-                                "reconstruction_slice_3": wandb.Image(reconstruction[i, 0, :, :, 75].cpu().detach().numpy() * 255),
-                                "original_slice_1": wandb.Image(volume[i, 0, 100, :, :].cpu().detach().numpy() * 255),
-                                "original_slice_2": wandb.Image(volume[i, 0, :, 75, :].cpu().detach().numpy() * 255),
-                                "original_slice_3": wandb.Image(volume[i, 0, :, :, 75].cpu().detach().numpy() * 255),
+                                "test_reconstruction_slice_1": wandb.Image(reconstruction[i, 0, 100, :, :].cpu().detach().numpy() * 255),
+                                "test_reconstruction_slice_2": wandb.Image(reconstruction[i, 0, :, 75, :].cpu().detach().numpy() * 255),
+                                "test_reconstruction_slice_3": wandb.Image(reconstruction[i, 0, :, :, 75].cpu().detach().numpy() * 255),
+                                "test_original_slice_1": wandb.Image(volume[i, 0, 100, :, :].cpu().detach().numpy() * 255),
+                                "test_original_slice_2": wandb.Image(volume[i, 0, :, 75, :].cpu().detach().numpy() * 255),
+                                "test_original_slice_3": wandb.Image(volume[i, 0, :, :, 75].cpu().detach().numpy() * 255),
                             })
 
 
